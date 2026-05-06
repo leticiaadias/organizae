@@ -1,11 +1,16 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 
 function Dashboard() {
   const [events, setEvents] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ name: "", date: "", location: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    date: "",
+    location: "",
+  });
   const navigate = useNavigate();
 
   const fetchEvents = async () => {
@@ -32,9 +37,13 @@ function Dashboard() {
     e.preventDefault();
     const token = localStorage.getItem("token");
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/events/", formData, {
-        headers: { Authorization: `Token ${token}` },
-      });
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/events/",
+        formData,
+        {
+          headers: { Authorization: `Token ${token}` },
+        }
+      );
       setEvents([...events, response.data]);
       setShowForm(false);
       setFormData({ name: "", date: "", location: "" });
@@ -49,12 +58,36 @@ function Dashboard() {
     navigate("/login");
   };
 
+  const handleJoinEvent = async (eventId) => {
+    try {
+      const { error } = await supabase.from("registrations").insert([
+        {
+          user_id: "668be242-690a-48d1-817e-c81216669966",
+          events_event: eventId,
+          status: "registered",
+        },
+      ]);
+
+      if (error) {
+        console.error("Erro detalhado do Supabase:", error);
+        throw error;
+      }
+
+      alert("Presença confirmada no evento!");
+    } catch (error) {
+      console.error("Erro ao entrar no evento:", error);
+      alert("Erro ao processar inscrição.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-white p-6">
       <div className="max-w-5xl mx-auto">
         <header className="flex justify-between items-center mb-10 pb-4 border-b border-slate-700">
-          <h1 className="text-3xl font-black text-blue-400">Organizaê - Meu Dashboard</h1>
-          <button 
+          <h1 className="text-3xl font-black text-blue-400">
+            Organizaê - Meu Dashboard
+          </h1>
+          <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-400 text-white px-4 py-2 flex items-center gap-2 rounded-lg font-semibold shadow-md transition-all active:scale-95"
           >
@@ -63,7 +96,9 @@ function Dashboard() {
         </header>
 
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-slate-200">Meus Eventos</h2>
+          <h2 className="text-2xl font-bold text-slate-200">
+            Próximos Eventos
+          </h2>
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-bold shadow-lg transform active:scale-95 transition-all"
@@ -73,16 +108,26 @@ function Dashboard() {
         </div>
 
         {showForm && (
-          <form onSubmit={handleCreateEvent} className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-8 shadow-xl animate-fade-in">
-            <h3 className="text-xl font-bold mb-4 text-blue-300">Novo Evento</h3>
+          <form
+            onSubmit={handleCreateEvent}
+            className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-8 shadow-xl animate-fade-in"
+          >
+            <h3 className="text-xl font-bold mb-4 text-blue-300">
+              Novo Evento
+            </h3>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Nome do Evento</label>
+                <label className="block text-sm font-medium mb-1">
+                  Nome do Evento
+                </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-400"
                   placeholder="Ex: Festa da Empresa"
                 />
@@ -93,7 +138,9 @@ function Dashboard() {
                   type="date"
                   required
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
                   className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 />
               </div>
@@ -103,7 +150,9 @@ function Dashboard() {
                   type="text"
                   required
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, location: e.target.value })
+                  }
                   className="w-full p-3 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-400"
                   placeholder="Ex: Salão Principal"
                 />
@@ -123,23 +172,37 @@ function Dashboard() {
         {events.length === 0 ? (
           <div className="bg-slate-800 border-2 border-dashed border-slate-700 rounded-xl p-12 text-center text-slate-400">
             <p className="text-lg">Você ainda não criou nenhum evento.</p>
-            <p className="text-sm">Clique em "Criar Evento" para começar.</p>
+            <p className="text-sm">Clique em "+ Criar Evento" para começar.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((evt) => (
-              <div key={evt.id} className="bg-slate-800 p-5 rounded-xl border border-slate-700 hover:border-blue-500 transition-colors shadow-lg flex flex-col justify-between">
+              <div
+                key={evt.id}
+                className="bg-slate-800 p-5 rounded-xl border border-slate-700 hover:border-blue-500 transition-colors shadow-lg flex flex-col justify-between"
+              >
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-2">{evt.name}</h3>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {evt.name}
+                  </h3>
                   <div className="text-slate-400 text-sm space-y-1 mb-4">
                     <p className="flex items-center gap-2">
-                       📅 {evt.date.split('-').reverse().join('/')}
+                      📅 {evt.date.split("-").reverse().join("/")}
                     </p>
-                    <p className="flex items-center gap-2">
-                       📍 {evt.location}
-                    </p>
+                    <p className="flex items-center gap-2">📍 {evt.location}</p>
                   </div>
                 </div>
+
+                <button
+                  onClick={() => handleJoinEvent(evt.id)}
+                  className="w-full mt-4 py-2 rounded-lg font-bold transition-all active:scale-95 shadow-lg"
+                  style={{
+                    backgroundColor: "#800020",
+                    color: "white",
+                  }}
+                >
+                  Quero Participar
+                </button>
               </div>
             ))}
           </div>
