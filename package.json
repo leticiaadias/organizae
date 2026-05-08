@@ -1,4 +1,9 @@
 {
+  "name": "organizae",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "node main.jsx"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.3"
   }

@@ -8,7 +8,7 @@ class EventListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Event.objects.filter(owner=self.request.user)
+       return Event.objects.all()
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
